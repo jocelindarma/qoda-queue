@@ -35,6 +35,7 @@ secret are created in `./data` on first run.
 /s/{space}/admin                 owner page
 /s/{space}/q/{queue}/staff       staff page for one queue
 /k/{key}                         owner/staff links: sets a cookie, redirects to the clean URL
+/recover                         email an owner their link again
 ```
 
 ### Access: secret links, no passwords
@@ -59,7 +60,10 @@ All plain text:
 - **You're in line**: right after joining, with the ticket number and a link back to the ticket page
 - **Almost your turn**: once 2 or fewer groups are ahead (skipped if they joined that close to the front)
 - **It's your turn**: when staff press Call
-- **Owner link**: when a space is created
+- **Owner link**: when a space is created, and again from `/recover`
+
+`/recover` answers the same way whether or not the email owns a space, sends at most one email per
+address every 5 minutes, and allows 5 tries per IP every 15 minutes.
 
 Nothing is sent inline. Each email is written to the `emails` table (an outbox) and a background
 loop in the same process sends it, so a slow or broken mail server never slows down joining or
@@ -93,6 +97,5 @@ Put Caddy or another HTTPS proxy in front. Cookies are `secure` in production.
 
 ## Not done yet
 
-- "Email me my owner link" recovery (the welcome email covers new spaces; there's no form to request it again)
 - SSE instead of polling
 - Rate limiting on join, PII cleanup job

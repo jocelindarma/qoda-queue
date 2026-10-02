@@ -29,6 +29,8 @@ export const guestSchema = z.object({
   partySize,
 });
 
+export const recoverSchema = z.object({ email: z.email("Enter a valid email") });
+
 export const quickJoinSchema = z.object({ partySize });
 
 export const walkInSchema = z.object({

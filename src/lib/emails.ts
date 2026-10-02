@@ -109,3 +109,21 @@ export function sendOwnerWelcome(base: string, space: Space): void {
   });
 }
 
+/** Owner links for every space this email owns. Sends nothing if it owns none. */
+export function sendOwnerRecovery(base: string, email: string): void {
+  const owned = db.select().from(schema.spaces).where(eq(schema.spaces.ownerEmail, email)).all();
+  if (!owned.length) return;
+  const one = owned.length === 1;
+  enqueueEmail({
+    to: email,
+    subject: one ? `Your Qoda owner link for ${owned[0].name}` : "Your Qoda owner links",
+    text: [
+      `Someone asked for the owner ${one ? "link" : "links"} for this email. Open ${one ? "it" : "one"} to get back into your owner page:`,
+      ``,
+      ...owned.flatMap((s) => [s.name, `${base}/k/${ownerKey(s)}`, ``]),
+      `Keep ${one ? "it" : "them"} private, anyone with ${one ? "it" : "a link"} can run your queues.`,
+      `If you didn't ask for this, you can ignore it. Nobody gets in without the link above.`,
+    ].join("\n"),
+    expiresInMs: 60 * MIN,
+  });
+}

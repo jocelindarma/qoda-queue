@@ -19,7 +19,7 @@ const qr = (url: string) => QRCode.toDataURL(url, { margin: 0, width: 512 });
 
 export default async function AdminPage({ params, searchParams }: Props) {
   const space = loadSpace((await params).space);
-  if (!(await isOwner(space))) return <NoAccess title={space.name} who="the owner of this space" />;
+  if (!(await isOwner(space))) return <NoAccess title={space.name} who="the owner of this space" recover />;
 
   const base = await baseUrl();
   const boardUrl = `${base}/s/${space.slug}`;
