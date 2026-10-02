@@ -1,5 +1,5 @@
 import "server-only";
-import { and, asc, count, desc, eq, inArray, lt, max, sql } from "drizzle-orm";
+import { and, asc, count, desc, eq, inArray, isNotNull, isNull, lt, max, sql } from "drizzle-orm";
 import { db, schema } from "@/db";
 import type { Guest, Queue, Space, Ticket, TicketStatus } from "@/db/schema";
 import { minsPerGroup, waitRange } from "./estimate";
@@ -9,6 +9,8 @@ import { randomToken } from "./tokens";
 
 const { tickets } = schema;
 const ACTIVE: TicketStatus[] = ["waiting", "called"];
+// "almost your turn" goes out once this many groups (or fewer) are ahead
+export const ALMOST_AHEAD = 2;
 
 // ---------- joining ----------
 
@@ -25,6 +27,12 @@ export function joinQueue(
       .from(tickets)
       .where(and(eq(tickets.queueId, queue.id), eq(tickets.serviceDate, date)))
       .get()?.n;
+    const ahead =
+      tx
+        .select({ n: count() })
+        .from(tickets)
+        .where(and(eq(tickets.queueId, queue.id), eq(tickets.serviceDate, date), eq(tickets.status, "waiting")))
+        .get()?.n ?? 0;
 
     return tx
       .insert(tickets)
@@ -36,6 +44,8 @@ export function joinQueue(
         publicToken: randomToken(18),
         name: input.name,
         partySize: input.partySize ?? null,
+        // already near the front, so "almost your turn" would just repeat the join email
+        almostNotifiedAt: ahead <= ALMOST_AHEAD ? new Date() : null,
       })
       .returning()
       .get();
@@ -138,9 +148,10 @@ export function guestTickets(space: Space, guest: Guest): TicketView[] {
   });
 }
 
-export function cancelByToken(token: string): boolean {
+/** Cancels the ticket; returns its queue so callers can react to the line moving. */
+export function cancelByToken(token: string): Queue | undefined {
   const t = db.select().from(tickets).where(eq(tickets.publicToken, token)).get();
-  if (!t) return false;
+  if (!t) return undefined;
   const res = db
     .update(tickets)
     .set({ status: "cancelled", closedAt: new Date() })
@@ -148,7 +159,33 @@ export function cancelByToken(token: string): boolean {
     .run();
   const q = getQueueById(t.queueId);
   if (q) bustBoard(q.spaceId);
-  return res.changes > 0;
+  return res.changes > 0 ? q : undefined;
+}
+
+/**
+ * Guests who just moved within ALMOST_AHEAD of the front and haven't been told.
+ * Marks them as told, so each ticket gets this at most once.
+ */
+export function claimAlmostTurn(queue: Queue): string[] {
+  const space = getSpaceById(queue.spaceId);
+  if (!space) return [];
+  const front = db
+    .select({ id: tickets.id, token: tickets.publicToken, notified: tickets.almostNotifiedAt })
+    .from(tickets)
+    .where(and(eq(tickets.queueId, queue.id), eq(tickets.serviceDate, serviceDate(space.timezone)), eq(tickets.status, "waiting"), isNotNull(tickets.guestId)))
+    .orderBy(asc(tickets.id))
+    .limit(ALMOST_AHEAD + 1)
+    .all();
+
+  return front.flatMap((t) => {
+    if (t.notified) return [];
+    const claimed = db
+      .update(tickets)
+      .set({ almostNotifiedAt: new Date() })
+      .where(and(eq(tickets.id, t.id), isNull(tickets.almostNotifiedAt)))
+      .run();
+    return claimed.changes ? [t.token] : [];
+  });
 }
 
 // ---------- staff ----------

@@ -54,16 +54,17 @@ queue's default. Shown as a range, never an exact number.
 
 ### Email
 
-Three emails, all plain text:
+All plain text:
 
 - **You're in line**: right after joining, with the ticket number and a link back to the ticket page
+- **Almost your turn**: once 2 or fewer groups are ahead (skipped if they joined that close to the front)
 - **It's your turn**: when staff press Call
 - **Owner link**: when a space is created
 
 Nothing is sent inline. Each email is written to the `emails` table (an outbox) and a background
 loop in the same process sends it, so a slow or broken mail server never slows down joining or
 calling. Failed sends retry with backoff (30s, 1m, 2m, 4m, 8m), then give up. "It's your turn"
-expires after 15 minutes and "you're in line" after 2 hours, since a late one is worse than none.
+expires after 15 minutes, "almost your turn" after 20 and "you're in line" after 2 hours, since a late one is worse than none.
 Bodies are cleared once sent, so the database doesn't keep ticket or owner links.
 
 Set `SMTP_URL` and `MAIL_FROM` to send for real (any provider with SMTP works: Resend, Postmark,
@@ -93,6 +94,5 @@ Put Caddy or another HTTPS proxy in front. Cookies are `secure` in production.
 ## Not done yet
 
 - "Email me my owner link" recovery (the welcome email covers new spaces; there's no form to request it again)
-- "Almost your turn" email when 2 groups are ahead
 - SSE instead of polling
 - Rate limiting on join, PII cleanup job

@@ -1,0 +1,1 @@
+ALTER TABLE `tickets` ADD `almost_notified_at` integer;

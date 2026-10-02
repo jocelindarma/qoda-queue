@@ -1,10 +1,10 @@
 import "server-only";
 import { eq } from "drizzle-orm";
 import { db, schema } from "@/db";
-import type { Space } from "@/db/schema";
+import type { Queue, Space } from "@/db/schema";
 import { enqueueEmail } from "./outbox";
 import { ownerKey } from "./session";
-import { getTicketView, type TicketView } from "./tickets";
+import { claimAlmostTurn, getTicketView, type TicketView } from "./tickets";
 
 const MIN = 60_000;
 
@@ -50,6 +50,28 @@ export function sendInLine(base: string, token: string): void {
   });
 }
 
+/** Call after the line moves (someone called, served or left). */
+export function sendAlmostTurns(base: string, queue: Queue): void {
+  for (const token of claimAlmostTurn(queue)) {
+    const found = emailFor(token);
+    if (!found) continue;
+    const { view, to } = found;
+    enqueueEmail({
+      to,
+      subject: `Almost your turn at ${view.queueName}: ${view.ticket}`,
+      text: [
+        `Hi ${view.name},`,
+        ``,
+        `Your turn at ${view.queueName} is coming up. ${waitLine(view)}`,
+        `Start heading back to ${view.spaceName} so you're there when they call ${view.ticket}.`,
+        ``,
+        `Your ticket: ${base}/t/${token}`,
+      ].join("\n"),
+      expiresInMs: 20 * MIN,
+    });
+  }
+}
+
 export function sendYourTurn(base: string, token: string): void {
   const found = emailFor(token);
   if (!found) return;
@@ -86,3 +108,4 @@ export function sendOwnerWelcome(base: string, space: Space): void {
     ].join("\n"),
   });
 }
+

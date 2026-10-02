@@ -69,6 +69,8 @@ export const tickets = sqliteTable(
     // when they left "waiting" (called or served directly), drives wait estimates
     servedAt: ms("served_at"),
     closedAt: ms("closed_at"),
+    // "almost your turn" email went out (or wasn't needed: they joined near the front)
+    almostNotifiedAt: ms("almost_notified_at"),
   },
   (t) => [
     uniqueIndex("tickets_number_uq").on(t.queueId, t.serviceDate, t.ticketNumber),
