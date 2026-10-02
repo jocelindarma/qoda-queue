@@ -210,3 +210,19 @@ p { margin: 0; }
 .admin-queue summary { cursor: pointer; color: var(--muted); font-size: 0.9375rem; }
 .qr-small { width: 140px; height: 140px; }
 .hint { font-size: 0.8125rem; color: var(--muted); margin: 0; }
+
+/* home page */
+.steps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.steps li { display: grid; gap: 8px; align-content: start; }
+.steps p { margin: 4px 0 0; }
+.step-num {
+  font-family: var(--font-display);
+  font-weight: 800;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: var(--ticket);
+  color: var(--ticket-ink);
+}
