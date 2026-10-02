@@ -251,7 +251,6 @@ export function applyStaffAction(queue: Queue, ticketId: number, action: StaffAc
 
   db.update(tickets).set(patch).where(eq(tickets.id, ticketId)).run();
   bustBoard(queue.spaceId);
-  // phase 4: on "call", enqueue the "it's your turn" email here
   return true;
 }
 

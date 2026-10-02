@@ -52,6 +52,27 @@ Keep it out of git and back it up with the DB. Losing it invalidates every link.
 Minutes per group = pace over the last 30 minutes (needs 3+ people served), otherwise the
 queue's default. Shown as a range, never an exact number.
 
+### Email
+
+Three emails, all plain text:
+
+- **You're in line**: right after joining, with the ticket number and a link back to the ticket page
+- **It's your turn**: when staff press Call
+- **Owner link**: when a space is created
+
+Nothing is sent inline. Each email is written to the `emails` table (an outbox) and a background
+loop in the same process sends it, so a slow or broken mail server never slows down joining or
+calling. Failed sends retry with backoff (30s, 1m, 2m, 4m, 8m), then give up. "It's your turn"
+expires after 15 minutes and "you're in line" after 2 hours, since a late one is worse than none.
+Bodies are cleared once sent, so the database doesn't keep ticket or owner links.
+
+Set `SMTP_URL` and `MAIL_FROM` to send for real (any provider with SMTP works: Resend, Postmark,
+SES, Mailgun...). Without `SMTP_URL`, emails are printed to the terminal. To see them as real
+emails locally, run [Mailpit](https://mailpit.axllent.org) and set `SMTP_URL=smtp://localhost:1025`.
+
+For real sending, verify your domain with the provider (SPF and DKIM DNS records), or most emails
+land in spam.
+
 ### Live updates
 
 Polling for now: tickets every 5s, staff every 4s, board every 10s. The board is cached for
@@ -63,14 +84,15 @@ Needs a persistent disk, so no serverless. Docker on any small VM works:
 
 ```bash
 docker build -t qoda .
-docker run -d -p 3000:3000 -v qoda-data:/data -e APP_URL=https://your-domain qoda
+docker run -d -p 3000:3000 -v qoda-data:/data -e APP_URL=https://your-domain \
+  -e SMTP_URL=smtps://user:password@smtp.example.com:465 -e MAIL_FROM="Qoda <queue@your-domain>" qoda
 ```
 
 Put Caddy or another HTTPS proxy in front. Cookies are `secure` in production.
 
 ## Not done yet
 
-- Email: "you're in line" and "it's your turn" (outbox + SMTP via nodemailer)
-- "Email me my owner link" recovery
+- "Email me my owner link" recovery (the welcome email covers new spaces; there's no form to request it again)
+- "Almost your turn" email when 2 groups are ahead
 - SSE instead of polling
 - Rate limiting on join, PII cleanup job

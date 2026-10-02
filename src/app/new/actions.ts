@@ -1,7 +1,9 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { sendOwnerWelcome } from "@/lib/emails";
 import { ownerCookie, ownerKey, setKeyCookie } from "@/lib/session";
+import { baseUrl } from "@/lib/url";
 import { createSpace } from "@/lib/spaces";
 import { createSpaceSchema, firstErrors } from "@/lib/validation";
 
@@ -21,6 +23,7 @@ export async function create(_: CreateSpaceState, form: FormData): Promise<Creat
   });
 
   await setKeyCookie(ownerCookie(space.id), ownerKey(space));
+  sendOwnerWelcome(await baseUrl(), space);
   redirect(`/s/${space.slug}/admin?welcome=1`);
 }
 

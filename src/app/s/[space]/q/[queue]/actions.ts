@@ -3,9 +3,11 @@
 import { redirect } from "next/navigation";
 import { db, schema } from "@/db";
 import type { Queue, Space } from "@/db/schema";
+import { sendInLine } from "@/lib/emails";
 import { currentGuest, forgetGuest, rememberGuest } from "@/lib/session";
 import { getQueue, getSpace } from "@/lib/spaces";
 import { activeLineCount, activeTicketIn, joinQueue } from "@/lib/tickets";
+import { baseUrl } from "@/lib/url";
 import { firstErrors, guestSchema, quickJoinSchema } from "@/lib/validation";
 
 export type JoinState = { errors?: Record<string, string>; values?: Record<string, string> };
@@ -38,7 +40,7 @@ export async function joinNew(spaceSlug: string, queueSlug: string, _: JoinState
   await rememberGuest(ctx.space, guest.id);
 
   const ticket = joinQueue(ctx.space, ctx.queue, { guestId: guest.id, name, partySize });
-  // phase 4: enqueue "you're in line" email
+  sendInLine(await baseUrl(), ticket.publicToken);
   redirect(`/t/${ticket.publicToken}`);
 }
 
@@ -66,6 +68,7 @@ export async function joinKnown(spaceSlug: string, queueSlug: string, _: JoinSta
   if (!parsed.success) return { errors: firstErrors(parsed.error) };
 
   const ticket = joinQueue(ctx.space, ctx.queue, { guestId: guest.id, name: guest.name, ...parsed.data });
+  sendInLine(await baseUrl(), ticket.publicToken);
   redirect(`/t/${ticket.publicToken}`);
 }
 

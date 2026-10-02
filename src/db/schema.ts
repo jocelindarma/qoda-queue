@@ -77,6 +77,30 @@ export const tickets = sqliteTable(
   ],
 );
 
+export const EMAIL_STATUSES = ["pending", "sending", "sent", "failed", "expired"] as const;
+export type EmailStatus = (typeof EMAIL_STATUSES)[number];
+
+/** Outbox. Rows are written next to the change that caused them and sent in the background. */
+export const emails = sqliteTable(
+  "emails",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    to: text("to").notNull(),
+    subject: text("subject").notNull(),
+    text: text("text").notNull(),
+    status: text("status", { enum: EMAIL_STATUSES }).notNull().default("pending"),
+    attempts: integer("attempts").notNull().default(0),
+    lastError: text("last_error"),
+    // retries back off by pushing this forward
+    sendAfter: ms("send_after").notNull().default(now),
+    // past this, sending is pointless ("it's your turn" an hour late)
+    expiresAt: ms("expires_at"),
+    sentAt: ms("sent_at"),
+    createdAt: ms("created_at").notNull().default(now),
+  },
+  (t) => [index("emails_due_idx").on(t.status, t.sendAfter)],
+);
+
 export type Space = typeof spaces.$inferSelect;
 export type Queue = typeof queues.$inferSelect;
 export type Guest = typeof guests.$inferSelect;

@@ -1,11 +1,13 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { db, schema } from "@/db";
+import { sendYourTurn } from "@/lib/emails";
 import { canStaff, clearCookie, staffCookie } from "@/lib/session";
 import { getQueue, getSpace } from "@/lib/spaces";
 import { applyStaffAction, bustBoard, joinQueue, type StaffAction } from "@/lib/tickets";
+import { baseUrl } from "@/lib/url";
 import { firstErrors, walkInSchema } from "@/lib/validation";
 
 async function requireStaff(spaceSlug: string, queueSlug: string) {
@@ -17,7 +19,16 @@ async function requireStaff(spaceSlug: string, queueSlug: string) {
 
 export async function updateTicket(spaceSlug: string, queueSlug: string, ticketId: number, action: StaffAction) {
   const { queue } = await requireStaff(spaceSlug, queueSlug);
-  return applyStaffAction(queue, ticketId, action);
+  const ok = applyStaffAction(queue, ticketId, action);
+  if (ok && action === "call") {
+    const t = db
+      .select({ token: schema.tickets.publicToken })
+      .from(schema.tickets)
+      .where(and(eq(schema.tickets.id, ticketId), eq(schema.tickets.queueId, queue.id)))
+      .get();
+    if (t) sendYourTurn(await baseUrl(), t.token);
+  }
+  return ok;
 }
 
 export async function setQueueOpen(spaceSlug: string, queueSlug: string, isOpen: boolean) {
