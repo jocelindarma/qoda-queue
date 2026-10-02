@@ -1,0 +1,212 @@
+:root {
+  --bg: #eef1f4;
+  --surface: #ffffff;
+  --ink: #1a2233;
+  --muted: #5f6878;
+  --line: #d5dbe3;
+  --ticket: #ffd23f;
+  --ticket-ink: #2a2100;
+  --go: #138a5b;
+  --go-soft: #d8f3e6;
+  --danger: #b4321f;
+  --focus: #2f6fed;
+
+  --font-display: "Bricolage Grotesque", "Arial Narrow", system-ui, sans-serif;
+  --font-body: "Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  --radius-s: 8px;
+  --radius-m: 14px;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #121722;
+    --surface: #1b2230;
+    --ink: #e8ecf2;
+    --muted: #9aa3b2;
+    --line: #2c3546;
+    --go: #3ccf8e;
+    --go-soft: #173a2c;
+    --danger: #f0806c;
+    --focus: #7aa5ff;
+    color-scheme: dark;
+  }
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+a { color: inherit; }
+h1, h2, h3 { font-family: var(--font-display); line-height: 1.1; margin: 0; letter-spacing: -0.01em; }
+h1 { font-size: 2rem; font-weight: 800; }
+h2 { font-size: 1.25rem; font-weight: 700; }
+p { margin: 0; }
+
+:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+
+/* layout */
+.narrow { max-width: 440px; margin: 0 auto; padding: 32px 20px 64px; display: grid; gap: 24px; }
+.wide { max-width: 980px; margin: 0 auto; padding: 24px 20px 64px; display: grid; gap: 24px; }
+.stack { display: grid; gap: 16px; }
+.row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+.spread { justify-content: space-between; }
+.muted { color: var(--muted); }
+.small { font-size: 0.875rem; }
+
+/* forms */
+.field { display: grid; gap: 6px; }
+.field label { font-weight: 600; font-size: 0.9375rem; }
+.field .hint { font-size: 0.8125rem; color: var(--muted); font-weight: 400; }
+.input {
+  width: 100%;
+  font: inherit;
+  font-size: 1.0625rem;
+  padding: 12px 14px;
+  border-radius: var(--radius-s);
+  border: 1.5px solid var(--line);
+  background: var(--surface);
+  color: var(--ink);
+}
+.input:focus { border-color: var(--focus); outline: none; box-shadow: 0 0 0 3px color-mix(in srgb, var(--focus) 25%, transparent); }
+.error { color: var(--danger); font-size: 0.875rem; }
+.pin-input { font-family: var(--font-display); font-size: 2rem; letter-spacing: 0.4em; text-align: center; font-weight: 700; }
+
+.btn {
+  font: inherit;
+  font-weight: 700;
+  border: 0;
+  border-radius: var(--radius-s);
+  padding: 12px 18px;
+  cursor: pointer;
+  background: var(--ink);
+  color: var(--bg);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.btn:disabled { opacity: 0.55; cursor: progress; }
+.btn-block { width: 100%; padding: 15px 18px; font-size: 1.0625rem; }
+.btn-go { background: var(--go); color: #fff; }
+.btn-ghost { background: transparent; color: var(--ink); border: 1.5px solid var(--line); }
+.btn-small { padding: 8px 12px; font-size: 0.875rem; }
+.btn-link { background: none; border: 0; padding: 0; color: var(--muted); text-decoration: underline; font: inherit; cursor: pointer; }
+
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-m); padding: 20px; }
+
+/* the ticket: the one loud thing in the customer flow */
+.ticket {
+  position: relative;
+  background: var(--ticket);
+  color: var(--ticket-ink);
+  border-radius: var(--radius-m);
+  padding: 28px 24px 24px;
+  text-align: center;
+  /* notches on the sides, like a torn deli ticket */
+  -webkit-mask: radial-gradient(circle 14px at 0 62%, transparent 98%, #000) left / 51% 100% no-repeat,
+                radial-gradient(circle 14px at 100% 62%, transparent 98%, #000) right / 51% 100% no-repeat;
+          mask: radial-gradient(circle 14px at 0 62%, transparent 98%, #000) left / 51% 100% no-repeat,
+                radial-gradient(circle 14px at 100% 62%, transparent 98%, #000) right / 51% 100% no-repeat;
+}
+.ticket-venue { font-weight: 600; font-size: 0.9375rem; opacity: 0.8; }
+.ticket-number {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-stretch: 75%;
+  font-size: clamp(4.5rem, 24vw, 6.5rem);
+  line-height: 1;
+  margin: 8px 0 4px;
+  font-variant-numeric: tabular-nums;
+}
+.ticket-perf { border-top: 2px dashed color-mix(in srgb, var(--ticket-ink) 35%, transparent); margin: 18px -24px 16px; }
+.ticket-meta { display: flex; justify-content: center; gap: 20px; font-size: 0.9375rem; }
+
+.ticket.is-called { background: var(--go); color: #fff; animation: pulse 1.6s ease-in-out 3; }
+.ticket.is-called .ticket-perf { border-color: rgba(255,255,255,0.4); }
+.ticket.is-done { background: var(--line); color: var(--muted); }
+@keyframes pulse { 50% { transform: scale(1.03); } }
+@media (prefers-reduced-motion: reduce) { .ticket.is-called { animation: none; } }
+
+.status-big { font-family: var(--font-display); font-size: 1.75rem; font-weight: 800; text-align: center; }
+
+/* staff list */
+.queue-list { list-style: none; margin: 0; padding: 0; display: grid; }
+.queue-row {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 16px;
+  align-items: center;
+  padding: 14px 4px;
+  border-bottom: 1px solid var(--line);
+}
+.queue-row.is-called { background: var(--go-soft); border-radius: var(--radius-s); padding-inline: 12px; border-bottom-color: transparent; margin-bottom: 4px; }
+.chip {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-stretch: 80%;
+  font-size: 1.375rem;
+  background: var(--ticket);
+  color: var(--ticket-ink);
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-variant-numeric: tabular-nums;
+  min-width: 84px;
+  text-align: center;
+}
+.queue-row.is-past .chip { background: var(--line); color: var(--muted); }
+.who { min-width: 0; }
+.who strong { font-size: 1.0625rem; }
+.who .muted { overflow-wrap: anywhere; }
+.actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+.badge { font-size: 0.8125rem; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: var(--line); color: var(--ink); }
+.badge-go { background: var(--go); color: #fff; }
+
+.toggle-closed { background: var(--danger); color: #fff; }
+
+.qr { background: #fff; padding: 12px; border-radius: var(--radius-s); width: 180px; height: 180px; }
+.qr img { width: 100%; height: 100%; display: block; }
+
+.copy { font-family: var(--font-body); font-size: 0.875rem; overflow-wrap: anywhere; background: var(--bg); padding: 8px 10px; border-radius: 6px; }
+
+@media (max-width: 640px) {
+  .queue-row { grid-template-columns: auto 1fr; }
+  .queue-row .actions { grid-column: 1 / -1; justify-content: stretch; }
+  .queue-row .actions .btn { flex: 1; }
+}
+
+/* brand */
+.brand { font-family: var(--font-display); font-weight: 800; font-size: 1.375rem; text-decoration: none; letter-spacing: -0.02em; justify-self: start; }
+.powered { font-size: 0.8125rem; color: var(--muted); text-align: center; }
+
+/* compact tickets on "My lines" */
+.ticket-compact { padding: 18px 20px 16px; }
+.ticket-compact .ticket-number { font-size: clamp(3rem, 16vw, 4rem); }
+.ticket-compact .ticket-perf { margin: 12px -20px 10px; }
+
+/* public board */
+.board { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.board-row { display: grid; grid-template-columns: auto 1fr auto; gap: 14px; align-items: center; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-s); padding: 12px 14px; }
+.board-row.is-paused { opacity: 0.6; }
+.board-row.is-paused .chip { background: var(--line); color: var(--muted); }
+.tv { max-width: 1400px; }
+.tv h1 { font-size: 3rem; }
+.board-tv { grid-template-columns: repeat(auto-fill, minmax(420px, 1fr)); gap: 16px; }
+.board-tv .board-row { padding: 20px 24px; }
+.board-tv .chip { font-size: 2.5rem; min-width: 160px; }
+.board-tv strong { font-size: 1.75rem; }
+.board-tv .small { font-size: 1.25rem; }
+
+/* owner page */
+.admin-queue { padding: 16px 4px; border-bottom: 1px solid var(--line); display: grid; gap: 10px; }
+.admin-queue summary { cursor: pointer; color: var(--muted); font-size: 0.9375rem; }
+.qr-small { width: 140px; height: 140px; }
+.hint { font-size: 0.8125rem; color: var(--muted); margin: 0; }
